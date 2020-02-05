@@ -26,6 +26,13 @@ Trabajo conjuntamente con un motor de recopilación de datos llamado Logtash, y 
             - soft: -1
             - hard: -1
 
+Asi se quedaria nuestro docker-compose.yml con la configuracion de Elasticsearch:
+![Alt text](images/cap7.png?raw=true "Title")
+
+Y este seria el resultado al entrar a "http://0.0.0.0:9200":
+![Alt text](images/cap6.png?raw=true "Title")
+
+
 ### Mongo
 
 ![Alt text](images/cap2.png?raw=true "Title")
@@ -40,6 +47,9 @@ Una de las diferencias más importantes con respecto a las bases de datos relaci
 - Tanto el servicio expone en el puerto 27017, como el host publica en este mismo
 - PErtenece a la red "practica_network"
 - Dispone de healthcheck (averiguar qué instrucción puede ser útil para verificar el estado de salud del servicio)
+
+
+
 
 ### Graylog
 

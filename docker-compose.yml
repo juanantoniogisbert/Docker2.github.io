@@ -1,0 +1,111 @@
+version: "3"
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.2
+    environment:
+      - http.host=0.0.0.0
+      - network.host=0.0.0.0
+      - transport-host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - ./elasticVol:/usr/share/elasticsearch/data
+    networks:
+      - practica_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5 
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  mongo:
+    image: mongo:3
+    volumes:
+      - ./VolMongo:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - practica_network
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  graylog:
+    image: graylog/graylog:3.1
+    environment:
+      - GRAYLOG_PASSWORD_SECRET=contragraylog
+      - GRAYLOG_ROOT_PASSWORD_SHA=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    volumes:
+      - ./GrayLogVol:/usr/share/elasticsearch/data
+    restart: on-failure
+    networks:
+      - practica_network
+    ports:
+      - "9000:9000"
+      - "12201:12201/udp"
+      - "12201:12201"
+      - "1514:1514"
+      - "1514:1514/udp"
+    depends_on:
+      - elasticsearch
+      - mongo
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ./VolMysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: hola1234
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: hola1234
+    networks:
+      - practica_network
+    healthcheck:
+      test: "/usr/bin/mysql --user=wordpress --password=wordpress --execute \"SHOW DATABASES;\""
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  wordpress:
+    image: wordpress:latest
+    volumes:
+      - ./VolWordpress:/var/www/html
+    restart: on-failure
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    networks:
+      - practica_network
+    ports:
+      - "9090:80"
+    logging:
+      driver: "gelf"
+    options:
+      gelf-address: "udp://localhost:12201"
+      tag: "primeros_logs"
+    depends_on:
+      - mysql
+
+
+networks:
+  practica_network:
+
+volumes: 
+  elasticVol:
+  VolMongo:
+  GrayLogVol:
+  VolMysql:
+  VolWordpress:
